@@ -41,66 +41,58 @@ The general usage of signals and slots is by connecting a slot
 function from a target object to a signal. First we'll have to add a signal
 to our class, by calling `sigslot:make-signal`:
 
-```
-(defclass dog ()
-  ((barked :accessor dog-barked
-           :initform (sigslot:make-signal))))
+    (defclass dog ()
+      ((barked :accessor dog-barked
+               :initform (sigslot:make-signal))))
            
-(setq *dog* (make-instance 'dog))
-```
+    (setq *dog* (make-instance 'dog))
 
-Then we'll add a function where we EMIT our signal. We can pass any
+Then we'll add a function where we `EMIT` our signal. We can pass any
 parameters we want and the receiving slot we'll be able to pick them
 up as &REST parameters.
 
-```
-(defun bark (dog &key loud)
-  (sigslot:emit (slot-value dog 'barked) :loud loud))
-  
-```
+    (defun bark (dog &key loud)
+      (sigslot:emit (slot-value dog 'barked) :loud loud))
 
-Now comes the time to receive those barkings, so we'll connect a slot
+Now comes the time to receive those barkings, so we'll `CONNECT` a slot
 function of some object to the `barked` signal of our dog object:
 
-```
-;; Our slot function.
-(defun on-bark (dog &rest rest)
-  (let ((loud (getf rest :loud)))
-    (format t "Dog ~a barked~@[ loudly~]" dog loud)))
+    ;; Our slot function.
+    (defun on-bark (dog &rest rest)
+      (let ((loud (getf rest :loud)))
+        (format t "Dog ~a barked~@[ loudly~]" dog loud)))
 
-;; We'll just make a dummy object to connect the signal.
-(setq *dummy* (make-instance 'standard-object))
+    ;; We'll just make a dummy object to connect the signal.
+    (setq *dummy* (make-instance 'standard-object))
 
-;; And we connect our dummy object to the barked signal.
-(sigslot:connect (dog-barked *dog*) #'on-bark *dummy*)
-```
+    ;; And we connect our dummy object to the barked signal.
+    (sigslot:connect (dog-barked *dog*) #'on-bark *dummy*)
+
 
 Finally, we can make our dog bark:
 
-```
-CL-USER> (bark *dog* :loudly t)
-Dog #<STANDARD-OBJECT {10015015D3}> barked loudly
-```
+    CL-USER> (bark *dog* :loudly t)
+    Dog #<STANDARD-OBJECT {10015015D3}> barked loudly
 
 ### Dispatching
 
-By default, all signals dispatch on the thread that called **EMIT** in
+By default, all signals dispatch on the thread that called `EMIT` in
 the order in which they were connected.
 
-On connection you can specify the dispatching method through the **:DISPATCH**
+On connection you can specify the dispatching method through the `:DISPATCH`
 keyword. The options are:
 
-* :DIRECT
-* :QUEUED
-* :MAIN-THREAD
+* `:DIRECT`
+* `:QUEUED`
+* `:MAIN-THREAD`
 
-The default is **:DIRECT** and works as explained above.
+The default is `:DIRECT` and works as explained above.
 
 If you instead prefer the dispatch to occur on the scheduler thread,
-use **:QUEUED**. The slot function will be queued and dispatched later on a
+use `:QUEUED`. The slot function will be queued and dispatched later on a
 different thread.
 
-Another option is **:MAIN-THREAD**, which causes the slot to be dispatched on
+Another option is `:MAIN-THREAD`, which causes the slot to be dispatched on
 the main thread, useful for UI apps.
 
 
@@ -130,56 +122,47 @@ slot function to the other functions.
 
 ## Observers
 
-The underlying implementation of signals is through the OBSERVABLE
+The underlying implementation of signals is through the `OBSERVABLE`
 class, which hosts a collection of observers. To receive a
 notification from an observable object, first we need to subclass from
-the OBSERVABLE class and register our observer object:
+the `OBSERVABLE` class and register our observer object:
 
-```
-;; Subclass from the observable mixin.
-(defclass person (sigslot:observable)
-  ((age :type fixnum
-        :accessor person-age
-        :initform 0)))
+    ;; Subclass from the observable mixin.
+    (defclass person (sigslot:observable)
+      ((age :type fixnum
+            :accessor person-age
+            :initform 0)))
 
-;; Create an instance of our observable person.
-(setq *person* (make-instance 'person))
-;; For simplicity, we'll reuse the PERSON class for our observer.
-(setq *boss* (make-instance 'person))
+    ;; Create an instance of our observable person.
+    (setq *person* (make-instance 'person))
+    ;; For simplicity, we'll reuse the PERSON class for our observer.
+    (setq *boss* (make-instance 'person))
 
-;; Register our observer object.
-(sigslot:register-observer *person* *boss*)
-```
+    ;; Register our observer object.
+    (sigslot:register-observer *person* *boss*)
 
-Then to notify our observers we'll define an UPDATE method that will be
-called by NOTIFY and then call NOTIFY on the observable:
+Then to notify our observers we'll define an `UPDATE` method that will be
+called by `NOTIFY` and then call `NOTIFY` on the observable:
 
-```
-;; First we'll define our UPDATE method for the observer.
-(defmethod sigslot:update ((self person) (object person) &rest rest)
-  (format t "Boss: Happy birthday. Now get back to work!"))
+    ;; First we'll define our UPDATE method for the observer.
+    (defmethod sigslot:update ((self person) (object person) &rest rest)
+      (format t "Boss: Happy birthday. Now get back to work!"))
 
-;; Then we'll define an :after method for setf of age, where we can
-;; add our call to NOTIFY. This is just to show how NOTIFY could be
-;; called when setting a property.
-(defmethod (setf person-age) :after (new-age (object person))
-  (sigslot:notify object new-age))
-```
+    ;; Then we'll define an :after method for setf of age, where we can
+    ;; add our call to NOTIFY. This is just to show how NOTIFY could be
+    ;; called when setting a property.
+    (defmethod (setf person-age) :after (new-age (object person))
+      (sigslot:notify object new-age))
 
 And to test it:
 
-```
-CL-USER> (setf (person-age *person*) 46)
-Boss: Happy birthday. Now get back to work!
-46
-```
+    CL-USER> (setf (person-age *person*) 46)
+    Boss: Happy birthday. Now get back to work!
+    46
 
-Finally, we can deregister from the OBSERVABLE object by calling:
+Finally, we can deregister from the `OBSERVABLE` object by calling:
 
-```
-(sigslot:deregister-observer *person* *boss*)
-```
-
+    (sigslot:deregister-observer *person* *boss*)
 
 ### What about much simpler needs?
 
@@ -188,10 +171,8 @@ and :after, which you can use to patch-in your observer code. It is
 less granular than an observer and more limited, but this might be all
 you need without bringing in another dependency:
 
-```
-(defmethod (setf person-age) :after (new-age (object person))
-    (format t "Common Lisp rocks!"))
-```
+    (defmethod (setf person-age) :after (new-age (object person))
+      (format t "Common Lisp rocks!"))
 
 
 # Running tests
@@ -202,28 +183,25 @@ other compilers/architectures/OSes, please let me know so I can update this docu
 
 To run the test suite:
 
-```
-CL-USER> (ql:quickload :sigslot/tests)
-CL-USER> (in-package #:sigslot/tests)
-CL-USER> (5am:run! 'sigslot)
+    CL-USER> (ql:quickload :sigslot/tests)
+    CL-USER> (in-package #:sigslot/tests)
+    CL-USER> (5am:run! 'sigslot)
 
-Running test suite SIGSLOT
- Running test REGISTER-OBSERVER ....
- Running test DEREGISTER-OBSERVER ...
- Running test NOTIFY-OBSERVER .
- Running test DO-NOT-NOTIFY-NIL-OBSERVER .
- Running test MANY-OBSERVERS .....
- Running test DIRECT-CONNECT ..
- Running test QUEUED-CONNECT ...
- Running test DISCONNECT ..
- Running test DIRECT-EMIT ..
- Running test NO-EMIT-AFTER-DISCONNECT .
- Did 24 checks.
-    Pass: 24 (100%)
-    Skip: 0 ( 0%)
-    Fail: 0 ( 0%)
-
-```
+    Running test suite SIGSLOT
+     Running test REGISTER-OBSERVER ....
+     Running test DEREGISTER-OBSERVER ...
+     Running test NOTIFY-OBSERVER .
+     Running test DO-NOT-NOTIFY-NIL-OBSERVER .
+     Running test MANY-OBSERVERS .....
+     Running test DIRECT-CONNECT ..
+     Running test QUEUED-CONNECT ...
+     Running test DISCONNECT ..
+     Running test DIRECT-EMIT ..
+     Running test NO-EMIT-AFTER-DISCONNECT .
+     Did 24 checks.
+        Pass: 24 (100%)
+        Skip: 0 ( 0%)
+        Fail: 0 ( 0%)
 
 
 # License (MIT)
