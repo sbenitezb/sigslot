@@ -63,11 +63,13 @@ The default handler will issue a WARN with the condition.")
         (:queued (jpl-queues:enqueue thunk *task-queue*))
         (:main-thread (call-in-main-thread thunk))))))
 
-;;; Specialized method for searching the object in the observers array.
+;;; Specialized method for searching an object in the observers array.
 (defmethod object-index ((self %signal) (object standard-object) &key)
-  (call-next-method self object :test #'(lambda (x y)
-                                          (or (eq x object)
-                                              (eq y object)))))
+  (let ((test))
+    (etypecase object
+      (%wrapper (setf test #'compare-object-with-wrapper))
+      (standard-object (setf test #'compare-object-with-object)))
+    (call-next-method self object :test test)))
 
 ;;;; Top level API functions and methods.
 
@@ -146,3 +148,17 @@ the slot.")
         do (handler-case (funcall task)
              (t (c) (funcall *unhandled-condition-handler* c)))))
 
+
+(defun compare-object-with-wrapper (x y)
+  (when (and x y)
+    (let* ((xweak-object (slot-value x 'weak-object))
+           (xobject (tg:weak-pointer-value xweak-object))
+           (yweak-object (slot-value y 'weak-object))
+           (yobject (tg:weak-pointer-value yweak-object)))
+      (eq xobject yobject))))
+
+(defun compare-object-with-object (x y)
+  (when (and x y)
+    (let* ((xweak-object (slot-value x 'weak-object))
+           (xobject (tg:weak-pointer-value xweak-object)))
+      (eq xobject y))))

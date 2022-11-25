@@ -131,7 +131,7 @@
 
 (test disconnect
   "Test disconnect from signal"
-   (with-fixture in-observable ()
+  (with-fixture in-observable ()
     (with-slots (test-signal) *observable*
       (connect test-signal *default-slot* *observer*)
       ;; Check disconnection.
@@ -141,7 +141,7 @@
 
 (test direct-emit
   "Test direct emit"
-   (with-fixture in-observable ()
+  (with-fixture in-observable ()
     (with-slots (test-signal) *observable*
       (connect test-signal *default-slot* *observer*)
       (let ((*val* nil))
@@ -153,7 +153,7 @@
 
 (test no-emit-after-disconnect
   "Test emit doesn't do anything after disconnect"
-   (with-fixture in-observable ()
+  (with-fixture in-observable ()
     (with-slots (test-signal) *observable*
       (connect test-signal *default-slot* *observer*)
       (disconnect test-signal *observer*)
@@ -161,3 +161,13 @@
         (emit test-signal "TEST")
         ;; Check the slot was not called.
         (is (null *val*))))))
+
+(test multiple-connections
+  "Test multiple connections to same signal"
+  (with-fixture in-observable ()
+    (with-slots (test-signal) *observable*
+      (let ((o1 (make-instance 'standard-object))
+            (o2 (make-instance 'standard-object)))
+        (is-true (connect test-signal *default-slot* *observer*))
+        (is-true (connect test-signal *default-slot* o1))
+        (is-true (connect test-signal *default-slot* o2))))))

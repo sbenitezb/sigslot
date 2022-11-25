@@ -122,12 +122,13 @@ in order to receive updates."))
   (:documentation "Looks for the position of OBJECT in the observers array of
 OBSERVABLE. If specified, :TEST is a designator for a comparison function that
 is applied to each member of the array. The default is the function EQ.
+
 Returns an array index or NIL.")
   (:method ((self observable) (object standard-object) &key (test #'eq))
     (flet ((object-is-weak-p (weak-pointer)
              (funcall test (tg:weak-pointer-value weak-pointer) object)))
       (let ((array (slot-value self 'observers)))
         (declare (array array))
-        (position-if #'(lambda (object)
-                         (object-is-weak-p object))
+        (position-if #'(lambda (element)
+                         (object-is-weak-p element))
                      array)))))
