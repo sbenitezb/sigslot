@@ -8,7 +8,8 @@
 (defvar *update*)
 (defvar *val*)
 
-(defparameter *default-slot* #'(lambda (o &rest rest) (setf *val* (list o rest))))
+(defparameter *default-slot* #'(lambda (target object &rest rest)
+                                 (setf *val* (list target object rest))))
 
 (defclass my-observable (observable)
   ((test-signal :accessor my-observable-test-signal :initform (make-signal))))
@@ -145,11 +146,12 @@
     (with-slots (test-signal) *observable*
       (connect test-signal *default-slot* *observer*)
       (let ((*val* nil))
-        (emit test-signal "TEST")
+        (emit test-signal *observable* "TEST")
         ;; Check the slot was called.
-        (destructuring-bind (object val) *val*
+        (destructuring-bind (target object val) *val*
+          (is (eq target *observer*))
           (is (string= (first val) "TEST"))
-          (is (eq object *observer*)))))))
+          (is (eq object *observable*)))))))
 
 (test no-emit-after-disconnect
   "Test emit doesn't do anything after disconnect"
@@ -158,7 +160,7 @@
       (connect test-signal *default-slot* *observer*)
       (disconnect test-signal *observer*)
       (let ((*val* nil))
-        (emit test-signal "TEST")
+        (emit test-signal *observable* "TEST")
         ;; Check the slot was not called.
         (is (null *val*))))))
 

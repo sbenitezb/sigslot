@@ -117,12 +117,12 @@ Returns T if successfully disconnected from SIGNAL, otherwise NIL.")
   (:method ((self %signal) (object standard-object))
     (deregister-observer self object)))
 
-(defgeneric emit (signal &rest rest)
-  (:documentation "Emits a SIGNAL to all connected slots.
+(defgeneric emit (signal object &rest rest)
+  (:documentation "Emits a SIGNAL from OBJECT to all connected slots.
 Additional arguments can be added to the method call and are used when calling
 the slot.")
-  (:method ((self %signal) &rest rest)
-    (apply #'notify self rest)))
+  (:method ((self %signal) (object standard-object) &rest rest)
+    (apply #'notify self object rest)))
 
 
 ;;;; Private functions.

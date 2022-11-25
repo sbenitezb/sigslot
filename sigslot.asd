@@ -5,7 +5,7 @@
   :author "Sebastián Benítez <sebastian@ds9soft.com>"
   :homepage "https://github.com/sbenitezb/sigslot"
   :license  "MIT"
-  :version "1.0.0"
+  :version "1.0.1"
   :serial t
   :depends-on (#:alexandria
                #:trivial-garbage

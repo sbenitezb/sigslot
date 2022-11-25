@@ -52,13 +52,13 @@ parameters we want and the receiving slot we'll be able to pick them
 up as &REST parameters.
 
     (defun bark (dog &key loud)
-      (sigslot:emit (slot-value dog 'barked) :loud loud))
+      (sigslot:emit (slot-value dog 'barked) dog :loud loud))
 
 Now comes the time to receive those barkings, so we'll `CONNECT` a slot
 function of some object to the `barked` signal of our dog object:
 
     ;; Our slot function.
-    (defun on-bark (dog &rest rest)
+    (defun on-bark (target dog &rest rest)
       (let ((loud (getf rest :loud)))
         (format t "Dog ~a barked~@[ loudly~]" dog loud)))
 
@@ -72,7 +72,7 @@ function of some object to the `barked` signal of our dog object:
 Finally, we can make our dog bark:
 
     CL-USER> (bark *dog* :loudly t)
-    Dog #<STANDARD-OBJECT {10015015D3}> barked loudly
+    Dog #<DOG {10022AFBD3} barked loudly
 
 ### Dispatching
 
