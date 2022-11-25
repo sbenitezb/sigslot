@@ -1,4 +1,4 @@
-# SigSlot for Common Lisp
+# SigSlot for Common Lisp (EXPERIMENTAL)
 
 SigSlot is a simple Common Lisp library that implements the [Signals &
 Slots](https://en.wikipedia.org/wiki/Signals_and_slots) pattern.
