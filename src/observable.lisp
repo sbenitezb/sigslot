@@ -45,7 +45,8 @@ thread where the NOTIFY method is called."))
       (%count-observers self))))
 
 (defgeneric register-observer (observable object)
-  (:documentation "Register an observer OBJECT to receive notifications.")
+  (:documentation "Register an observer OBJECT to receive notifications.
+Returns T if registration was successful, NIL otherwise.")
   (:method ((self observable) (object standard-object))
     (let ((weak-object (tg:make-weak-pointer object)))
       (with-slots (observers lock) self
@@ -78,7 +79,7 @@ are applied to UPDATE.")
         ;; Go through each observer in the observers array and call the update
         ;; method on them.
         (map nil #'(lambda (weak-pointer)
-                     (when-let ((o (tg:weak-pointer-value weak-pointer)))
+                     (when-let ((o (weak-pointer-value weak-pointer)))
                        (apply #'update self o rest)))
              observers)))))
 
@@ -96,8 +97,8 @@ in order to receive updates."))
     (declare (fixnum pack-counter))
     (decf pack-counter)
     (when (<= pack-counter 0)
-      (pack-observers-array observable)
-      t)))
+      (pack-observers-array observable))
+    t))
 
 ;;; Remove all null or invalid weak pointers from the observers array.
 (defun pack-observers-array (observable)
@@ -107,9 +108,12 @@ in order to receive updates."))
                                observers))))
 
 (defun valid-weak-pointer-p (pointer)
-  (and pointer
-       (tg:weak-pointer-p pointer)
+  (and (tg:weak-pointer-p pointer)
        (tg:weak-pointer-value pointer)))
+
+(defun weak-pointer-value (pointer)
+  (when (tg:weak-pointer-p pointer)
+    (tg:weak-pointer-value pointer)))
 
 (defun invalid-weak-pointer-p (pointer)
   (not (valid-weak-pointer-p pointer)))
@@ -126,7 +130,7 @@ is applied to each member of the array. The default is the function EQ.
 Returns an array index or NIL.")
   (:method ((self observable) (object standard-object) &key (test #'eq))
     (flet ((object-is-weak-p (weak-pointer)
-             (funcall test (tg:weak-pointer-value weak-pointer) object)))
+             (funcall test (weak-pointer-value weak-pointer) object)))
       (let ((array (slot-value self 'observers)))
         (declare (array array))
         (position-if #'(lambda (element)
