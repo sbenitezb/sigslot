@@ -95,7 +95,7 @@ in order to receive updates."))
   (with-slots (pack-counter) observable
     (declare (fixnum pack-counter))
     (decf pack-counter)
-    (when (<= 0 pack-counter)
+    (when (<= pack-counter 0)
       (pack-observers-array observable)
       t)))
 
