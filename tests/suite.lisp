@@ -43,6 +43,16 @@
         (register-observer *observable* *observer*)
         (is-true condition)))))
 
+(test register-deregister-observer-multiple-times
+  "Test registering and deregistering an observer several times"
+  (with-fixture in-observable ()
+    (dotimes (i sigslot::+max-nil-weaks-before-packing+)
+      (is-true (register-observer *observable* *observer*))
+      (is-true (deregister-observer *observable* *observer*))
+      (is (zerop (observer-count *observable*))))
+    ;; Here observer packing was triggered.
+    (is (zerop (observer-count *observable*)))))
+
 (test deregister-observer
   "Test deregistering an observer"
   (with-fixture in-observable ()
