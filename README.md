@@ -71,7 +71,7 @@ function of some object to the `barked` signal of our dog object:
 
 Finally, we can make our dog bark:
 
-    CL-USER> (bark *dog* :loudly t)
+    CL-USER> (bark *dog* :loud t)
     Dog #<DOG {10022AFBD3} barked loudly
 
 ### Dispatching
